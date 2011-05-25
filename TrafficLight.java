@@ -20,7 +20,7 @@ class TrafficLight extends Thread {
 
 	public void run() {
 		while(true) {
-			if(state == RED) {
+			if(state == RED) { //state is red so wait for a signal to change state
 				while (!signal.getSignal(this.id)) {
 					wait();
 				}
@@ -28,14 +28,14 @@ class TrafficLight extends Thread {
 			}
 			else if(state == GREEN) {
 				sleep(6); // the first minimum 6 seconds
-				int i=0; // number of times we waited for 
+				int i = 0; // number of times we waited for 
 				while(signal.getSignal(this.id) && i<3){
 					wait(2000);
 					i++;
 				}
 				changeState(ORANGE);
 			}
-			else{ // orange
+			else{ // orange wait 2 second go to orange
 				sleep(2);
 				changeState(RED);
 			}
