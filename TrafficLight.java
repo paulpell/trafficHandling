@@ -1,4 +1,5 @@
 package trafficHandling;
+import static trafficHandling.LightState.*;
 
 class TrafficLight extends Thread {
 
