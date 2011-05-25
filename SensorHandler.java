@@ -59,6 +59,7 @@ public class SensorHandler {
 	}
 	
 	public synchronized void setSignal(int numeros, boolean state) {
+		trafficLights.get(numeros).getState() == WAITING; //THIS IS IMPORTANT TODO
 		captors.set(numeros,state);
 	}
 }
