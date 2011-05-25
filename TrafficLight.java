@@ -1,30 +1,36 @@
-package concurrence;
+package trafficHandling;
 
 class TrafficLight extends Thread {
 
 	private int id;
-	private enum LightState {RED, GREEN, ORANGE}
 	private LightState state;
-	private static Detector signal;
+	private static SensorHandler signal;
 
 
 	public TrafficLight(int id) {
 		this.id = id;
+		this.state = RED;
+	}
+
+	public TrafficLight(int id, LightState initialState) {
+		this.id = id;
+		this.state = initialState;
 	}
 
 	public void run() {
 		while(true) {
-			if(etat == RED) {
-				while (!signal.getSignal()) {
+			if(state == RED) {
+				while (!signal.getSignal(this.id)) {
 					wait();
 				}
 				changeState(GREEN);
 			}
-			else if(etat == GREEN) {
+			else if(state == GREEN) {
 				sleep(6); // the first minimum 6 seconds
 				int i=0; // number of times we waited for 
-				while(){
-					wait(2);
+				while(signal.getSignal(this.id) && i<3){
+					wait(2000);
+					i++;
 				}
 				changeState(ORANGE);
 			}
@@ -35,7 +41,7 @@ class TrafficLight extends Thread {
 		}
 	}
 
-	private void changeState(EtatFeu newState) {
+	private void changeState(LightState newState) {
 		state = newState;
 	}
 }
