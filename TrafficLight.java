@@ -6,6 +6,7 @@ class TrafficLight extends Thread {
 	private int id;
 	private LightState state;
 	private static SensorHandler signal;
+	private double firstGreenTime;
 
 
 	public TrafficLight(int id) {
@@ -27,15 +28,19 @@ class TrafficLight extends Thread {
 				changeState(GREEN);
 			}
 			else if(state == GREEN /*&& !signal.getSignal(this.id) */) {
-				saveTime();
+				firstGreenTime = System.currentTimeMillis();
 				wait();// wait until some other light gets a signal (given by notify)
 				
-				if(time < 6)
-					waitUntil6();
-				
-				while(signal.lastSignalTime() < 2)
-					wait2_orUntil12();
-				
+				double time = System.currentMillis() - firstGreenTime;
+				if(time < 6000)
+					sleep(6000 - time);
+					//waitUntil6();
+				// here, time values (approximately) 6000
+				while(signal.lastSignalTime() < 2 && time < 12000) {
+					if(time <= 10000) sleep(2000); // we must 2 seconds, as the 12 will not be exceeded
+					else sleep(12000 - time);
+					time = System.currentMillis() - firstGreenTime;
+				}
 				changeState(ORANGE);
 				/*
 				sleep(6); // the first minimum 6 seconds
