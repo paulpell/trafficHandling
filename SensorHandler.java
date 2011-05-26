@@ -59,6 +59,7 @@ public class SensorHandler extends Thread {
 		return false;
 	}
 	
+	// WE HAVE TO INSERT THE LIGHTS IN PRIORITY ORDER!!! (ok in Croisement)
 	public synchronized boolean getSignal(int numeros) {//HERE IS THE PRIORITY LIST
 		assert numeros < captors.size();
 		for (int i = 0; i < numeros;i++) {
@@ -76,5 +77,10 @@ public class SensorHandler extends Thread {
 	public synchronized void setSignal(int numeros, boolean state) {
 //		trafficLights.get(numeros).getState() == WAITING; //THIS IS IMPORTANT TODO
 		captors.set(numeros,state);
+		lastTimes.set(numeros, System.currentTimeMillis());
+		TrafficLight concerned = captors.get(numeros);
+		if(concerned == greenLight) {
+			captors.get(numeros).notify();
+		}
 	}
 }

@@ -24,7 +24,8 @@ class TrafficLight extends Thread {
 	public synchronized void run() {
 		while(true) {
 			if(state == RED) { //state is red so wait for a signal to change state
-				while (!signal.getSignal(this.id)) {//priority issue ?
+				while (!signal.getSignal(this.id)) {//priority issue ? SHOULD BE FINE
+													// hasSignal would cause trouble
 					try {
 						wait();
 					} catch( InterruptedException e) {
@@ -42,7 +43,7 @@ class TrafficLight extends Thread {
 				}
 				
 				double time = System.currentTimeMillis() - firstGreenTime;
-				if(time < 6000) {
+				if(time < 6000) { // wait the initial 6 seconds
 					try {
 						sleep((long)(6000 - time));
 					} catch(InterruptedException e) {
@@ -51,7 +52,10 @@ class TrafficLight extends Thread {
 				}
 
 				// here, time values (approximately) 6000
-				while(signal.lastSignalTime(this.id) < 2 && time < 12000) {
+				time = System.currentTimeMillis();
+				// while the last impulsion arrived less than 2 secs before,
+				// and we did not wait 12 secs now
+				while(time - signal.lastSignalTime(this.id) < 2 && time < 12000) {
 					if(time <= 10000) {
 						try {
 							sleep((long)2000); // we must wait 2 seconds, as the 12 will not be exceeded
@@ -66,8 +70,10 @@ class TrafficLight extends Thread {
 							e.printStackTrace();
 						}
 					}
+					// we need the current time for the while test
 					time = System.currentTimeMillis() - firstGreenTime;
 				}
+				System.out.printf("Light %i changed to orange after %1.1f", id, time);
 				changeState(ORANGE);
 				/*
 				sleep(6); // the first minimum 6 seconds
