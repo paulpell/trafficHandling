@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import static trafficHandling.LightState.*;
+
 
 public class SensorHandler extends Thread {
 	private Scanner in;
@@ -31,9 +33,11 @@ public class SensorHandler extends Thread {
 		while(true) {
 			int value = in.nextInt();
 			if (checkInput(value)){
-				System.out.println("t=" + 5 + " : capteur " + value + " active");
-				captors.set(value, true);//put the corresponding capteur in the good list
-				lastTimes.set(value, System.currentTimeMillis());
+				//System.out.println("t=" + 5 + " : capteur " + value + " active");
+				System.out.printf("t= %1.1f : capteur %d active\n", (double)System.currentTimeMillis()/1000, value);
+				setSignal(value, true);
+				//captors.set(value, true);//put the corresponding capteur in the good list
+				//lastTimes.set(value, System.currentTimeMillis());
 			} else {
 				System.out.println("Capteur invalide");
 			}
@@ -78,9 +82,10 @@ public class SensorHandler extends Thread {
 //		trafficLights.get(numeros).getState() == WAITING; //THIS IS IMPORTANT TODO
 		captors.set(numeros,state);
 		lastTimes.set(numeros, System.currentTimeMillis());
-		TrafficLight concerned = captors.get(numeros);
-		if(concerned == greenLight) {
-			captors.get(numeros).notify();
+		TrafficLight concerned = trafficLights.get(numeros);
+		if(trafficLights.get(numeros).getLightState() == RED) {
+			System.out.println(trafficLights.get(numeros).getState());
+			trafficLights.get(numeros).notify();
 		}
 	}
 }

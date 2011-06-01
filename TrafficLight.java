@@ -24,6 +24,7 @@ class TrafficLight extends Thread {
 	public synchronized void run() {
 		while(true) {
 			if(state == RED) { //state is red so wait for a signal to change state
+				signal.setSignal(this.id, false);
 				while (!signal.getSignal(this.id)) {//priority issue ? SHOULD BE FINE
 													// hasSignal would cause trouble
 					try {
@@ -96,6 +97,11 @@ class TrafficLight extends Thread {
 	}
 
 	private void changeState(LightState newState) {
+		System.out.printf("Light %d changes state at t= %l\n", this.id, System.currentTimeMillis());
 		state = newState;
+	}
+	
+	public LightState getLightState() {
+		return this.state;
 	}
 }
