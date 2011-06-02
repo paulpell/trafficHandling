@@ -2,90 +2,91 @@ package trafficHandling;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
 
 import static trafficHandling.LightState.*;
 
 
 public class SensorHandler extends Thread {
-	private Scanner in;
 	private LinkedList<TrafficLight> trafficLights;
 	
 	private ArrayList<Boolean> captors;
 	private ArrayList<Long> lastTimes;
+	private ArrayList<ReentrantLock> locks;
+	private ArrayList<Condition> conditions;
+	
+	private ReentrantLock megaLock = new ReentrantLock();
 	
 	public SensorHandler() {
-		in = new Scanner(System.in);
 		trafficLights = new LinkedList<TrafficLight>();
 		captors = new ArrayList<Boolean>();
-		lastTimes = new ArrayList<Long>(); // to be discussed
+		lastTimes = new ArrayList<Long>();
+		locks = new ArrayList<ReentrantLock>();
+		conditions = new ArrayList<Condition>();
 	}
 	
-	public SensorHandler(TrafficLight light) {
-		in = new Scanner(System.in);
-		trafficLights = new LinkedList<TrafficLight>();
-		trafficLights.add(light);
-		captors = new ArrayList<Boolean>();
-		lastTimes = new ArrayList<Long>(); // to be discussed
-	}
-	
-	public void run() {
+	public synchronized void run() {
 		while(true) {
-			int value = in.nextInt();
-			if (checkInput(value)){
-				//System.out.println("t=" + 5 + " : capteur " + value + " active");
-				System.out.printf("t= %1.1f : capteur %d active\n", (double)System.currentTimeMillis()/1000, value);
-				setSignal(value, true);
-				//captors.set(value, true);//put the corresponding capteur in the good list
-				//lastTimes.set(value, System.currentTimeMillis());
-			} else {
-				System.out.println("Capteur invalide");
+			try{
+				wait();// wait a new signal
+			} catch( InterruptedException e) {
+				e.printStackTrace();
+			} 
+			for( int i=0; i<trafficLights.size(); i++) {
+				if(getSignal(i)) {
+					handleSignal(i);
+				}
 			}
 		}
 	}
 	
-	private boolean checkInput(int i) {
-		return i < this.trafficLights.size();
-	}
+	
 	
 	public void addLight(TrafficLight feu) {
 		trafficLights.add(feu);
 		captors.add(false);
 		lastTimes.add(0L);
+		locks.add(feu.getLock());
+		conditions.add(feu.getCondition());
 	}
 	
-	public synchronized boolean hasSignal() {
-		for (boolean i : captors){
-			if (i) {
-				return true;
-			}
-		}
-		return false;
+	public int getLightsCount() {
+		return trafficLights.size();
 	}
 	
-	// WE HAVE TO INSERT THE LIGHTS IN PRIORITY ORDER!!! (ok in Croisement)
-	public synchronized boolean getSignal(int numeros) {//HERE IS THE PRIORITY LIST
-		assert numeros < captors.size();
-		for (int i = 0; i < numeros;i++) {
-			if (captors.get(i)) {
-				return false;
-			}
-		}
-		return captors.get(numeros);
+	public synchronized void setSignal(int numeros, boolean state) {
+		captors.set(numeros, state);
+		lastTimes.set(numeros, System.currentTimeMillis());
+		notify();
 	}
-
+	
 	public long lastSignalTime(int id) {
 		return lastTimes.get(id);
 	}
 	
-	public synchronized void setSignal(int numeros, boolean state) {
-//		trafficLights.get(numeros).getState() == WAITING; //THIS IS IMPORTANT TODO
-		captors.set(numeros,state);
-		lastTimes.set(numeros, System.currentTimeMillis());
-		TrafficLight concerned = trafficLights.get(numeros);
+	public boolean getSignal(int i) {
+		return captors.get(i);
+	}
+	
+	public synchronized void handleSignal(int numeros) {
 		if(trafficLights.get(numeros).getLightState() == RED) {
 			System.out.println(trafficLights.get(numeros).getState());
-			trafficLights.get(numeros).notify();
+			for ( int i=0; i< trafficLights.size(); i++ ) {
+				if (trafficLights.get(i).getLightState() == GREEN){
+					locks.get(i).lock();
+					conditions.get(i).signal();
+					locks.get(i).unlock();
+				}
+			}
+			// wake the red one
+			locks.get(numeros).lock();
+			conditions.get(numeros).signal();
+			locks.get(numeros).unlock();
 		}
+	}
+	
+	public ReentrantLock getMegaLock(){
+		return megaLock;
 	}
 }
