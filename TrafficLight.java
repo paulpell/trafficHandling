@@ -29,15 +29,13 @@ class TrafficLight extends Thread {
 	}
 
 	public void run() {
-	//public void run() {
 		if(state == GREEN){// green initial state: we need to take the lock
 			signal.getMegaLock().lock();
-			System.out.println("took the lock: "+this);
 		}
 		while(true) {
-			switch (state ) {
+			switch (state) {
 				case RED:
-					System.out.println("Light "+id+" changed to red at t="+clk.getTime());
+					System.out.println("t="+clk.getTime()+": Light "+id+" changed to red");
 					try {
 						lock.lock();
 						condition.await();
@@ -52,11 +50,10 @@ class TrafficLight extends Thread {
 					changeState(GREEN);
 					break;
 					
-				case GREEN:;
-					System.out.println("Light " + id+" changes to green at t="+clk.getTime());
+				case GREEN:
+					System.out.println("t="+clk.getTime()+": Light "+id+" changed to green");
 					firstGreenTime = System.currentTimeMillis();
-					//firstGreenTime = clk.getTime();
-					//System.out.println("firstGreenTime = "+clk.getTime());//firstGreenTime);
+					
 					// wait until some other light gets a signal (given by notify)
 					try {
 						lock.lock();
@@ -69,58 +66,58 @@ class TrafficLight extends Thread {
 						ie.printStackTrace();
 					}
 					
-					double time = System.currentTimeMillis() - firstGreenTime;
-					if(time < 6000) { // wait the initial 6 seconds
+					double elapsedSinceGreen = System.currentTimeMillis() - firstGreenTime;
+					if(elapsedSinceGreen < 6000) { // wait the initial 6 seconds
 						try {
-							sleep((long)(6000 - time));
+							sleep((long)(6000 - elapsedSinceGreen));
 						} catch(InterruptedException e) {
 							e.printStackTrace();
 						}
 					}
 					
 					// reset the time to now
-					time = System.currentTimeMillis();
+					elapsedSinceGreen = System.currentTimeMillis() - firstGreenTime;
+					double elapsedSinceSignal = System.currentTimeMillis() - signal.lastSignalTime(this.id);
+					
 					// while the last impulsion arrived less than 2 secs before,
 					// and we did not wait 12 secs now
-					while(time - signal.lastSignalTime(this.id) < 2 && time < 12000) {
-						if(time <= 10000) {
+					while(elapsedSinceSignal < 2000 && elapsedSinceGreen < 12000) {
+						if(elapsedSinceGreen <= 10000) {// then we can wait for two full secs
 							try {
-								long t = 2000 - (long)time + signal.lastSignalTime(this.id);
-								//sleep((long)2000); // we must wait 2 seconds, as the 12 will not be exceeded
+								long t = 2000 - (long)elapsedSinceSignal;
+								//System.out.println("going to wait for " + t+", signal.lastTime(id) = "+
+								//					signal.lastSignalTime(this.id));
 								sleep(t); // wait until 2 secs elapsed since the last signal
 							} catch( InterruptedException e){
 								e.printStackTrace();
 							}
 						}
-						else {// else, 
+						else {// else, we wait until 12 seconds elapsed
 							try {
-								sleep((long)(12000 - time));
+								sleep((long)(12000 - elapsedSinceGreen));
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
 						// we need the current time for the while test
-						time = System.currentTimeMillis() - firstGreenTime;
+						elapsedSinceGreen = System.currentTimeMillis() - firstGreenTime;
+						elapsedSinceSignal = System.currentTimeMillis() - signal.lastSignalTime(this.id);
 					}
 					changeState(ORANGE);
 					break;
-				//}
-			//}
-			//else{ // orange wait 2 second go to orange
-				//case( ORANGE ): {
+					
+					
 				case ORANGE:
-					//System.out.printf("Light %d changed to orange, t=%d\n", id, System.currentTimeMillis());
-					System.out.println("Light " + id + " changed to orange at t="+clk.getTime());
+					System.out.println("t="+clk.getTime()+": Light "+id+" changed to orange");
 					try{
 						sleep(2000);
 					} catch( InterruptedException e) {
 						e.printStackTrace();
 					}
-					//System.out.println("sleeped 2 secs, t="+System.currentTimeMillis());
 					changeState(RED);
 					signal.getMegaLock().unlock();// after we are red, we let the others do
 					break;
-				//}
+					
 			}
 		}
 	}

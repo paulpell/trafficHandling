@@ -1,7 +1,6 @@
 package trafficHandling;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
@@ -9,17 +8,22 @@ import static trafficHandling.LightState.*;
 
 
 public class SensorHandler extends Thread {
-	private LinkedList<TrafficLight> trafficLights;
 	
+	private ArrayList<TrafficLight> trafficLights;
 	private ArrayList<Boolean> captors;
 	private ArrayList<Long> lastTimes;
 	private ArrayList<ReentrantLock> locks;
 	private ArrayList<Condition> conditions;
 	
+	// this lock is used to synchronize the lights:
+	// when one light wants to change to green, it takes the lock.. So
+	// it must wait until the lock is free (i.e. until the previously
+	// green light has turned to red)
 	private final ReentrantLock megaLock = new ReentrantLock();
+	//megaLock: just a fine name
 	
 	public SensorHandler() {
-		trafficLights = new LinkedList<TrafficLight>();
+		trafficLights = new ArrayList<TrafficLight>();
 		captors = new ArrayList<Boolean>();
 		lastTimes = new ArrayList<Long>();
 		locks = new ArrayList<ReentrantLock>();
@@ -59,6 +63,8 @@ public class SensorHandler extends Thread {
 		notify(); // tells the Thread there is a new signal
 	}
 	
+	// FIXME do we change lastTimes into a list of times
+	// given by Clock, or let it be with millis?????
 	public long lastSignalTime(int id) {
 		return lastTimes.get(id);
 	}
@@ -70,7 +76,6 @@ public class SensorHandler extends Thread {
 	public synchronized void handleSignal(int numeros) {
 		// if the numerosth light is green, it will look for itself
 		if(trafficLights.get(numeros).getLightState() == RED) {
-			System.out.println(trafficLights.get(numeros).getState());
 			// we need to tell the green light it has to turn red
 			// so we check all the lights to find it
 			for ( int i=0; i< trafficLights.size(); i++ ) {

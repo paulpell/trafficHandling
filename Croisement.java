@@ -6,8 +6,8 @@ public class Croisement {
 
 	public void main() {
 		sensorHandler = new SensorHandler();
-		InputThread it = new InputThread(sensorHandler);
 		Clock clk = new Clock();
+		InputThread it = new InputThread(sensorHandler, clk);
 		// ids defined in priority order
 		//TrafficLight NS = new TrafficLight(0, sensorHandler, trafficHandling.LightState.GREEN);
 		TrafficLight NS = new TrafficLight(0, sensorHandler, clk, trafficHandling.LightState.GREEN);

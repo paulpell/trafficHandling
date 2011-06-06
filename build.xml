@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="trafficHandling" default="build" basedir=".">
+	<property name="sources" location="${basedir}" />	
+	<property name="build" location="${basedir}/build" />	
+
+	<target name="clean">
+		<delete dir="${build}" />
+	</target>
+
+	<target name="build" description="Build the project">
+		<mkdir dir="${build}" />
+		<javac 	srcdir="${sources}"
+				destdir="${build}"
+				debug="on" debuglevel="lines,vars,source" 
+				includeantruntime="false"/>
+	</target>
+
+	<!-- Optional task to start the project. Either adapt this task to the settings of 
+		your project or provide a shell script (eg., run.sh) to start the proxy. 
+	-->
+	<target name="run" description="Start the traffic handling program">
+		<!-- Replace with your main class -->
+		<java classname="trafficHandling.Main">
+			<!-- Replace with command line arguments, if any -->
+			<arg value=""/>
+			<classpath>				
+				<pathelement path="${build}"/>
+         </classpath>
+		</java>
+	</target>
+</project>

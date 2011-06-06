@@ -5,7 +5,6 @@ package trafficHandling;
 public class Clock extends Thread {
 	
 	private long beginTime;
-	
 	private long time;
 	
 	public Clock () {
