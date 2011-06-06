@@ -16,7 +16,7 @@ public class SensorHandler extends Thread {
 	private ArrayList<ReentrantLock> locks;
 	private ArrayList<Condition> conditions;
 	
-	private ReentrantLock megaLock = new ReentrantLock();
+	private final ReentrantLock megaLock = new ReentrantLock();
 	
 	public SensorHandler() {
 		trafficLights = new LinkedList<TrafficLight>();
@@ -40,9 +40,7 @@ public class SensorHandler extends Thread {
 			}
 		}
 	}
-	
-	
-	
+		
 	public void addLight(TrafficLight feu) {
 		trafficLights.add(feu);
 		captors.add(false);
@@ -58,7 +56,7 @@ public class SensorHandler extends Thread {
 	public synchronized void setSignal(int numeros, boolean state) {
 		captors.set(numeros, state);
 		lastTimes.set(numeros, System.currentTimeMillis());
-		notify();
+		notify(); // tells the Thread there is a new signal
 	}
 	
 	public long lastSignalTime(int id) {
@@ -70,8 +68,11 @@ public class SensorHandler extends Thread {
 	}
 	
 	public synchronized void handleSignal(int numeros) {
+		// if the numerosth light is green, it will look for itself
 		if(trafficLights.get(numeros).getLightState() == RED) {
 			System.out.println(trafficLights.get(numeros).getState());
+			// we need to tell the green light it has to turn red
+			// so we check all the lights to find it
 			for ( int i=0; i< trafficLights.size(); i++ ) {
 				if (trafficLights.get(i).getLightState() == GREEN){
 					locks.get(i).lock();
