@@ -36,9 +36,11 @@ class TrafficLight extends Thread {
 			switch (state) {
 				case RED:
 					System.out.println("t="+clk.getTime()+": Light "+id+" changed to red");
+
+					// do nothing while noone wants to become green
 					try {
 						lock.lock();
-						condition.await();
+						condition.await();// SensorHandler will look for our sleep
 						lock.unlock();
 					} catch( InterruptedException e) {
 						e.printStackTrace();
@@ -46,7 +48,8 @@ class TrafficLight extends Thread {
 					catch (IllegalMonitorStateException ie) {
 						ie.printStackTrace();
 					}
-					signal.getMegaLock().lock(); // before we change state (else there are two green lights)
+					signal.getMegaLock().lock(); // make sure all the lights are red
+					signal.setFalseSignal(this.id);// ok, we saw you wanted to change
 					changeState(GREEN);
 					break;
 					
@@ -54,10 +57,14 @@ class TrafficLight extends Thread {
 					System.out.println("t="+clk.getTime()+": Light "+id+" changed to green");
 					firstGreenTime = System.currentTimeMillis();
 					
-					// wait until some other light gets a signal (given by notify)
+					lock.lock();
+					condition.signal(); // first, tell SensorHandler we are green
+					lock.unlock();
+
+					// wait until some other light gets a signal (called in handleSignal)
 					try {
 						lock.lock();
-						condition.await();
+						condition.await(); // next, wait until another light wanna change
 						lock.unlock();
 					} catch( InterruptedException e) {
 						e.printStackTrace();
@@ -66,6 +73,8 @@ class TrafficLight extends Thread {
 						ie.printStackTrace();
 					}
 					
+					// do the time handling stuff
+
 					double elapsedSinceGreen = System.currentTimeMillis() - firstGreenTime;
 					if(elapsedSinceGreen < 6000) { // wait the initial 6 seconds
 						try {
@@ -85,8 +94,6 @@ class TrafficLight extends Thread {
 						if(elapsedSinceGreen <= 10000) {// then we can wait for two full secs
 							try {
 								long t = 2000 - (long)elapsedSinceSignal;
-								//System.out.println("going to wait for " + t+", signal.lastTime(id) = "+
-								//					signal.lastSignalTime(this.id));
 								sleep(t); // wait until 2 secs elapsed since the last signal
 							} catch( InterruptedException e){
 								e.printStackTrace();
@@ -103,6 +110,8 @@ class TrafficLight extends Thread {
 						elapsedSinceGreen = System.currentTimeMillis() - firstGreenTime;
 						elapsedSinceSignal = System.currentTimeMillis() - signal.lastSignalTime(this.id);
 					}
+					
+					signal.setFalseSignal(this.id);// the cars had enough time until now to pass =)
 					changeState(ORANGE);
 					break;
 					
@@ -123,7 +132,6 @@ class TrafficLight extends Thread {
 	}
 
 	private void changeState(LightState newState) {
-		//System.out.println("Light "+id+" changes state at t= "+ System.currentTimeMillis());
 		state = newState;
 	}
 	

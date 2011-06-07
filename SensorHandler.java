@@ -21,6 +21,8 @@ public class SensorHandler extends Thread {
 	// green light has turned to red)
 	private final ReentrantLock megaLock = new ReentrantLock();
 	//megaLock: just a fine name
+
+	private int nextGreen = 0;// needed to know what thread to await
 	
 	public SensorHandler() {
 		trafficLights = new ArrayList<TrafficLight>();
@@ -30,18 +32,55 @@ public class SensorHandler extends Thread {
 		conditions = new ArrayList<Condition>();
 	}
 	
-	public synchronized void run() {
+	public void run() {
 		while(true) {
-			try{
-				wait();// wait a new signal
-			} catch( InterruptedException e) {
-				e.printStackTrace();
+			// wait a new signal
+			while (!hasSignal()) {
+				wait_signal(); // just don't want a synchronized run();
+							   // it would cause trouble when waiting on a Condition
 			} 
-			for( int i=0; i<trafficLights.size(); i++) {
-				if(getSignal(i)) {
-					handleSignal(i);
+
+			int greenIndex = getGreenLightIndex();
+
+			if (greenIndex == -1) { // no green yet, we wait it
+				// nextGreen is set in handleSignal()
+				locks.get(nextGreen).lock();
+				try {
+					conditions.get(nextGreen).await();
+				} catch (InterruptedException ie) {
+					ie.printStackTrace();
 				}
+				locks.get(nextGreen).unlock();
+				greenIndex = getGreenLightIndex();
 			}
+			// tell the green light it must go red
+			locks.get(greenIndex).lock();
+			conditions.get(greenIndex).signal();
+			locks.get(greenIndex).unlock();
+
+
+			// after the locking, we are sure all the lights are red
+			megaLock.lock();
+			megaLock.unlock();
+
+			// so, now we can just look what light wants to be green,
+			// with circular light handling
+			int next = (greenIndex + 1) % getLightsCount();
+			int nextnext = (next + 1) % getLightsCount();
+			if (captors.get(next)) {
+				handleSignal(next); // notifies both the green and the next green they want to change
+			}
+			else {
+				handleSignal(nextnext);
+			}
+		}
+	}
+	
+	public synchronized void wait_signal() {
+		try{
+			wait();// wait a new signal
+		} catch( InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 		
@@ -57,10 +96,23 @@ public class SensorHandler extends Thread {
 		return trafficLights.size();
 	}
 	
-	public synchronized void setSignal(int numeros, boolean state) {
+	private int getGreenLightIndex() {
+		for(int i=0; i<getLightsCount(); i++)
+			if (trafficLights.get(i).getLightState() == GREEN)
+				return i;
+		return -1;
+	}
+	
+	public synchronized void setSignal(final int numeros, final boolean state) {
 		captors.set(numeros, state);
 		lastTimes.set(numeros, System.currentTimeMillis());
-		notify(); // tells the Thread there is a new signal
+		if (numeros != getGreenLightIndex())
+			notify(); // tells the Thread there is a new signal
+	}
+	
+	// useful, because setSignal sends a notification; this here not
+	public synchronized void setFalseSignal(int numeros) {
+		captors.set(numeros, false);
 	}
 	
 	// FIXME do we change lastTimes into a list of times
@@ -69,22 +121,24 @@ public class SensorHandler extends Thread {
 		return lastTimes.get(id);
 	}
 	
+	public boolean hasSignal() {
+		for(boolean b: captors)
+			if (b) return true;
+		return false;
+	}
+	
 	public boolean getSignal(int i) {
 		return captors.get(i);
 	}
 	
+	// when arriving in this method, all the lights must be red
 	public synchronized void handleSignal(int numeros) {
+		assert getGreenLightIndex() == -1;
+
 		// if the numerosth light is green, it will look for itself
 		if(trafficLights.get(numeros).getLightState() == RED) {
-			// we need to tell the green light it has to turn red
-			// so we check all the lights to find it
-			for ( int i=0; i< trafficLights.size(); i++ ) {
-				if (trafficLights.get(i).getLightState() == GREEN){
-					locks.get(i).lock();
-					conditions.get(i).signal();
-					locks.get(i).unlock();
-				}
-			}
+			setFalseSignal(numeros);
+			nextGreen = numeros;
 			// wake the red one
 			locks.get(numeros).lock();
 			conditions.get(numeros).signal();
