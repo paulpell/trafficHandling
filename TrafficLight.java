@@ -15,10 +15,14 @@ class TrafficLight extends Thread {
 	private Condition condition;
 
 
+	/**
+	 * Constructor for a TrafficLight with no initialState => it will be RED
+	 */
 	public TrafficLight(int id, SensorHandler signal, Clock clk) {
 		this(id, signal, clk, RED);
 	}
 
+	
 	public TrafficLight(int id, SensorHandler signal, Clock clk, LightState initialState) {
 		this.id = id;
 		this.signal = signal;
@@ -28,6 +32,14 @@ class TrafficLight extends Thread {
 		this.condition = lock.newCondition();
 	}
 
+	/**
+	 * This function basically just goes through a cycle.
+	 * When entering it, it enters an infinite loop, in which there is a switch statement.
+	 * One case per possible color. For each, it does the waiting/timing stuff that
+	 * is needed in the project. Like waiting minimum 6 seconds, and maximum 12
+	 * when an other light wants to change and this one is green.
+	 * Or waiting 2 secs and go to red when it is orange.
+	 */
 	public void run() {
 		if(state == GREEN){// green initial state: we need to take the lock
 			signal.getMegaLock().lock();
@@ -36,8 +48,7 @@ class TrafficLight extends Thread {
 			switch (state) {
 				case RED:
 					System.out.println("t="+clk.getTime()+": Light "+id+" changed to red");
-
-					// do nothing while noone wants to become green
+					// do nothing while this light does not want to become green
 					try {
 						lock.lock();
 						condition.await();// SensorHandler will look for our sleep
