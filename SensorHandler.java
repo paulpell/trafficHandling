@@ -7,6 +7,10 @@ import java.util.concurrent.locks.Condition;
 import static trafficHandling.LightState.*;
 
 
+/**
+ * This class is the main class of the project. It holds all the lights,
+ * handles the signals and tells to the lights when they have to change of state.
+ */
 public class SensorHandler extends Thread {
 	
 	private ArrayList<TrafficLight> trafficLights;
@@ -24,6 +28,7 @@ public class SensorHandler extends Thread {
 
 	private int nextGreen = 0;// needed to know what thread to await
 	
+	// just initializes all the lists
 	public SensorHandler() {
 		trafficLights = new ArrayList<TrafficLight>();
 		captors = new ArrayList<Boolean>();
@@ -32,17 +37,25 @@ public class SensorHandler extends Thread {
 		conditions = new ArrayList<Condition>();
 	}
 	
+	/**
+	 * The job of this function is really easy:
+	 * it waits until an impulsion arrives (given by InputThread),
+	 * then tells the currently green light it has to change to red and
+	 * then, when all the lights are red, checks which one is the next to 
+	 * become green.
+	 */
 	public void run() {
 		while(true) {
 			// wait a new signal
 			while (!hasSignal()) {
 				wait_signal(); // just don't want a synchronized run();
-							   // it would cause trouble when waiting on a Condition
+							   // it would cause trouble when waiting on a Condition,
+							   // and calling an other synchronized function here
 			} 
 
 			int greenIndex = getGreenLightIndex();
 
-			if (greenIndex == -1) { // no green yet, we wait it
+			if (greenIndex == -1) { // no green yet, we wait it: it is needed
 				// nextGreen is set in handleSignal()
 				locks.get(nextGreen).lock();
 				try {
@@ -68,14 +81,18 @@ public class SensorHandler extends Thread {
 			int next = (greenIndex + 1) % getLightsCount();
 			int nextnext = (next + 1) % getLightsCount();
 			if (captors.get(next)) {
-				handleSignal(next); // notifies both the green and the next green they want to change
+				handleSignal(next); // notifies the next green it wants to change
 			}
-			else {
+			else {// else, we are sure the other is set (a green light sets nothing)
 				handleSignal(nextnext);
 			}
 		}
 	}
 	
+	/**
+	 * Simple function that uses this class' monitor to wait a signal (when
+	 * there is an impulsion).
+	 */
 	public synchronized void wait_signal() {
 		try{
 			wait();// wait a new signal
@@ -84,14 +101,22 @@ public class SensorHandler extends Thread {
 		}
 	}
 		
-	public void addLight(TrafficLight feu) {
-		trafficLights.add(feu);
+	/**
+	 * This function must be called when a new light is added to this handler.
+	 * @param light the instance of TrafficLight to be added
+	 */
+	public void addLight(TrafficLight light) {
+		trafficLights.add(light);
 		captors.add(false);
 		lastTimes.add(0L);
-		locks.add(feu.getLock());
-		conditions.add(feu.getCondition());
+		locks.add(light.getLock());
+		conditions.add(light.getCondition());
 	}
 	
+	/**
+	 * Returns the number of lights that are stored.
+	 * @return the count of the lights
+	 */
 	public int getLightsCount() {
 		return trafficLights.size();
 	}
@@ -103,6 +128,11 @@ public class SensorHandler extends Thread {
 		return -1;
 	}
 	
+	/**
+	 * This function is to be used when a light receives an impulsion.
+	 * @param numeros the id of the light that received the impulsion
+	 * @param state whether we set it to true or false (in this project, always true)
+	 */
 	public synchronized void setSignal(final int numeros, final boolean state) {
 		captors.set(numeros, state);
 		lastTimes.set(numeros, System.currentTimeMillis());
@@ -110,27 +140,50 @@ public class SensorHandler extends Thread {
 			notify(); // tells the Thread there is a new signal
 	}
 	
+	/**
+	 * This function is to be used when one wants to clear the signal of some light.
+	 * @param numeros the id of the light to be resetted
+	 */
 	// useful, because setSignal sends a notification; this here not
 	public synchronized void setFalseSignal(int numeros) {
 		captors.set(numeros, false);
 	}
 	
+	/**
+	 * Returns the time at which the idth light received an impulsion
+	 * @param id the id number of the interesting light
+	 * @return the time given by System.currentTimeMillis when the impulsion arrived
+	 */
 	// FIXME do we change lastTimes into a list of times
 	// given by Clock, or let it be with millis?????
 	public long lastSignalTime(int id) {
 		return lastTimes.get(id);
 	}
 	
+	/**
+	 * return whether any signal is set (whether any light got an impulsion)
+	 * @return true iff at least one signal is set
+	 */
 	public boolean hasSignal() {
 		for(boolean b: captors)
 			if (b) return true;
 		return false;
 	}
 	
+	/**
+	 * Returns whether the ith signal had an impulsion.
+	 * @param i the index of the light we question
+	 * @return true iff there was a not cleared impulsion on ith light
+	 */
 	public boolean getSignal(int i) {
 		return captors.get(i);
 	}
 	
+	/**
+	 * Function that tells a light it must turn to green. (but only once
+	 * all the lights are green)
+	 * @param numeros the id of the light that should change to green
+	 */
 	// when arriving in this method, all the lights must be red
 	public synchronized void handleSignal(int numeros) {
 		assert getGreenLightIndex() == -1;
@@ -138,7 +191,7 @@ public class SensorHandler extends Thread {
 		// if the numerosth light is green, it will look for itself
 		if(trafficLights.get(numeros).getLightState() == RED) {
 			setFalseSignal(numeros);
-			nextGreen = numeros;
+			nextGreen = numeros; // this is needed in run()
 			// wake the red one
 			locks.get(numeros).lock();
 			conditions.get(numeros).signal();
@@ -146,6 +199,11 @@ public class SensorHandler extends Thread {
 		}
 	}
 	
+	/**
+	 * function to get the lock that ensures that all the lights are red.
+	 * (every time a light turns to green, it locks it and it is released
+	 * when it turns to red from orange)
+	 */
 	public ReentrantLock getMegaLock(){
 		return megaLock;
 	}
