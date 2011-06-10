@@ -96,7 +96,7 @@ public class SensorHandler extends Thread {
 	 * Simple function that uses this class' monitor to wait a signal (when
 	 * there is an impulsion).
 	 */
-	public synchronized void wait_signal() {
+	private synchronized void wait_signal() {
 		try{
 			wait();// wait a new signal
 		} catch( InterruptedException e) {
