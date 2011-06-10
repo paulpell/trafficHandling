@@ -9,7 +9,7 @@ import static trafficHandling.LightState.*;
 
 /**
  * This class is the main class of the project. It holds all the lights,
- * handles the signals and tells to the lights when they have to change of state.
+ * handles the signals and tells to the lights when they have to change state.
  */
 public class SensorHandler extends Thread {
 	
@@ -28,6 +28,9 @@ public class SensorHandler extends Thread {
 
 	private int nextGreen = 0;// needed to know what thread to await
 	
+	/**
+	 * That constructor initializes the different lists that class maintains.
+	 */
 	// just initializes all the lists
 	public SensorHandler() {
 		trafficLights = new ArrayList<TrafficLight>();
@@ -121,6 +124,7 @@ public class SensorHandler extends Thread {
 		return trafficLights.size();
 	}
 	
+	// returns the index of the currently green light, or -1 if there's none
 	private int getGreenLightIndex() {
 		for(int i=0; i<getLightsCount(); i++)
 			if (trafficLights.get(i).getLightState() == GREEN)

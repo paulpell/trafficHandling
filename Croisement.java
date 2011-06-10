@@ -1,11 +1,19 @@
 package trafficHandling;
 
+/**
+ * Class that contains all the necessary stuff to simulate one junction.
+ * That is: a clock, a SensorHandler, an InputThread (listening on the
+ * keyboard and transmitting signals to sensorHandler), and some
+ * TrafficLights. <br/>
+ * Then it starts all these threads, that is it starts the simulation.
+ */
 public class Croisement {
-	private SensorHandler sensorHandler;
 
-
+	/**
+	 * The method that does all the things
+	 */
 	public void main() {
-		sensorHandler = new SensorHandler();
+		SensorHandler sensorHandler = new SensorHandler();
 		Clock clk = new Clock();
 		InputThread it = new InputThread(sensorHandler, clk);
 		// ids are defined in priority order
