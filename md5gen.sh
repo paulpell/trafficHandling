@@ -1,3 +1,3 @@
 #!/bin/sh
-find . -type f -print0 -name '*.java'| xargs -0 md5sum >> check.md5
+find . -maxdepth 1 -type f -print0 | xargs -0 md5sum >> check.md5
 
