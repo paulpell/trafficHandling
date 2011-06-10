@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Condition;
  * This is the class representing a light in the junction.
  * It has several fields, see the list below. (And the source)<br/>
  */
-class TrafficLight extends Thread {
+public class TrafficLight extends Thread {
 
 	private int id;
 	private LightState state;

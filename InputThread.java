@@ -8,7 +8,7 @@ import java.util.InputMismatchException;
  * This class is just a Thread listening for the keyboard input, and 
  * sending the signals to its SensorHandler instance.
  */
-class InputThread extends Thread {
+public class InputThread extends Thread {
 
 	/** the SensorHandler instance, to give the new inputs */
 	private SensorHandler sensorHandler;
