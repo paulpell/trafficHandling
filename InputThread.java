@@ -24,14 +24,13 @@ class InputThread extends Thread {
 			try {
 				value = in.nextInt();
 				if (checkInput(value)){
-					//System.out.printf("t= %1.1f : capteur %d active\n", (double)System.currentTimeMillis()/1000, value);
-					System.out.println("t="+clk.getTime()+" : capteur "+value+" actif");
+					System.out.println("t=" + clk.getTime() + " : capteur " + value + " actif");
 					sensorHandler.setSignal(value, true);
 				} else {
-					System.out.println("Capteur invalide");
+					throw new InputMismatchException();
 				}
 			} catch(InputMismatchException e) {
-				System.out.println("invalid integer input");
+				System.out.println("Invalid integer input");
 				in.next();
 				continue;
 			}

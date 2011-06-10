@@ -3,8 +3,8 @@ package trafficHandling;
 class Main {
 	
 	public static void main(String[] args) {
-		Croisement croi = new Croisement();
-		croi.main();
+		Croisement croisement = new Croisement();
+		croisement.main();
 	}
 
 }
