@@ -41,7 +41,8 @@ class TrafficLight extends Thread {
 	 * Or waiting 2 secs and go to red when it is orange.
 	 */
 	public void run() {
-		if(state == GREEN){// green initial state: we need to take the lock
+		// green initial state: we need to take the lock
+		if(state == GREEN){
 			signal.getMegaLock().lock();
 		}
 		while(true) {
@@ -56,9 +57,7 @@ class TrafficLight extends Thread {
 					} catch( InterruptedException e) {
 						e.printStackTrace();
 					}
-					catch (IllegalMonitorStateException ie) {
-						ie.printStackTrace();
-					}
+					
 					signal.getMegaLock().lock(); // make sure all the lights are red
 					signal.setFalseSignal(this.id);// ok, we saw you wanted to change
 					changeState(GREEN);
@@ -125,7 +124,6 @@ class TrafficLight extends Thread {
 					signal.setFalseSignal(this.id);// the cars had enough time until now to pass =)
 					changeState(ORANGE);
 					break;
-					
 					
 				case ORANGE:
 					System.out.println("t="+clk.getTime()+": Light "+id+" changed to orange");
