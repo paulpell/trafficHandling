@@ -3,7 +3,7 @@
 <project name="trafficHandling" default="build" basedir=".">
 	<property name="sources" location="${basedir}" />	
 	<property name="build" location="${basedir}/build" />	
-
+	<property name="javadoc" location="${basedir}/javadoc" />
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
@@ -28,5 +28,17 @@
 				<pathelement path="${build}"/>
          </classpath>
 		</java>
+	</target>
+
+	<target name="javadoc" description="create the javadoc for this project">
+		<mkdir dir="${javadoc}" />
+		<!-- sourcepath="${sources}"-->
+		<javadoc 
+				 destdir="${javadoc}"
+				 packagenames="trafficHandling" >
+			<fileset dir="${sources}">
+				<include name="*.java"/>
+			</fileset>
+		</javadoc>
 	</target>
 </project>
