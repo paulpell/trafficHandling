@@ -1,3 +1,11 @@
+This project (in the dir trafficHandling) was written by Malik Bougacha and Paul Pellegrini
+
+
+Just run ./run.sh, it does everything for you =)
+(checks md5 \0/, builds the project and the javadoc, and launches the simulation)
+
+Please, read the javadoc.. This document just shows what classes exist.
+
 our classes: 
 	Clock
 		used to count the time since the beginning of the program
