@@ -16,13 +16,22 @@ class TrafficLight extends Thread {
 
 
 	/**
-	 * Constructor for a TrafficLight with no initialState => it will be RED
+	 * Constructor for a TrafficLight with no initialState, it will be RED by default
+	 * @param id the identification number of the @TrafficLight. 
+	 * @param signal the SensorHandler which controls the color.
+	 * @param clk the main clock.
 	 */
 	public TrafficLight(int id, SensorHandler signal, Clock clk) {
 		this(id, signal, clk, RED);
 	}
 
-	
+	/**
+	 * Constructor for a TrafficLight
+	 * @param id the identification number of the TrafficLight. 
+	 * @param signal the SensorHandler which controls the color.
+	 * @param clk the main clock.
+	 * @param initialState the initial color of the TrafficLight
+	 */
 	public TrafficLight(int id, SensorHandler signal, Clock clk, LightState initialState) {
 		this.id = id;
 		this.signal = signal;
@@ -34,16 +43,19 @@ class TrafficLight extends Thread {
 
 	/**
 	 * This function basically just goes through a cycle.
-	 * When entering it, it enters an infinite loop, in which there is a switch statement.
+	 * It enters an infinite loop, in which there is a switch statement.
 	 * One case per possible color. For each, it does the waiting/timing stuff that
-	 * is needed in the project. Like waiting minimum 6 seconds, and maximum 12
-	 * when an other light wants to change and this one is green.
-	 * Or waiting 2 secs and go to red when it is orange.
+	 * is needed in the project. 
+	 * <ul>
+	 * <li>RED wait for a signal from {@link SensorHandler}, then get the orange lock. Then set the light to GREEN </li>
+	 * <li>GREEN wait for another light to want to become green. Apply the time condition then go to ORANGE</li>
+	 * <li>ORANGE wait two second, then release the orange lock</li>
+	 * </ul>
 	 */
 	public void run() {
 		// green initial state: we need to take the lock
 		if(state == GREEN){
-			signal.getMegaLock().lock();
+			signal.getOrangeLock().lock();
 		}
 		while(true) {
 			switch (state) {
@@ -58,9 +70,9 @@ class TrafficLight extends Thread {
 						e.printStackTrace();
 					}
 					
-					signal.getMegaLock().lock(); // make sure all the lights are red
+					signal.getOrangeLock().lock(); // make sure all the lights are red
 					signal.setFalseSignal(this.id);// ok, we saw you wanted to change
-					changeState(GREEN);
+					setLightState(GREEN);
 					break;
 					
 				case GREEN:
@@ -122,7 +134,7 @@ class TrafficLight extends Thread {
 					}
 					
 					signal.setFalseSignal(this.id);// the cars had enough time until now to pass =)
-					changeState(ORANGE);
+					setLightState(ORANGE);
 					break;
 					
 				case ORANGE:
@@ -132,15 +144,15 @@ class TrafficLight extends Thread {
 					} catch( InterruptedException e) {
 						e.printStackTrace();
 					}
-					changeState(RED);
-					signal.getMegaLock().unlock();// after we are red, we let the others do
+					setLightState(RED);
+					signal.getOrangeLock().unlock();// after we are red, we let the others do
 					break;
 					
 			}
 		}
 	}
 
-	private void changeState(LightState newState) {
+	private void setLightState(LightState newState) {
 		state = newState;
 	}
 	

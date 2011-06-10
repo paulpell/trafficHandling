@@ -27,10 +27,10 @@ class InputThread extends Thread {
 					System.out.println("t=" + clk.getTime() + " : capteur " + value + " actif");
 					sensorHandler.setSignal(value, true);
 				} else {
-					throw new InputMismatchException();
+					System.err.println("Invalid Input");
 				}
 			} catch(InputMismatchException e) {
-				System.out.println("Invalid integer input");
+				System.err.println("Invalid integer input");
 				in.next();
 				continue;
 			}

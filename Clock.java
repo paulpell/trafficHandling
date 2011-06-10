@@ -1,7 +1,5 @@
 package trafficHandling;
 
-
-
 public class Clock extends Thread {
 	
 	private long beginTime;
@@ -18,15 +16,15 @@ public class Clock extends Thread {
 			try {
 				sleep(100);//100 millis
 				time = System.currentTimeMillis() - beginTime;
-			} catch(InterruptedException ie) {
-				ie.printStackTrace();
+			} catch(InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
 
 	// tricky function to give the time in a format with one decimal
 	public double getTime() {
-		int foo = (int)time / 100; // tenths of seconds
+		int foo = (int)Math.ceil(time / 100.); // tenths of seconds
 		return foo/10.;
 	}
 

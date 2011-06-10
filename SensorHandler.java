@@ -19,12 +19,12 @@ public class SensorHandler extends Thread {
 	private ArrayList<ReentrantLock> locks;
 	private ArrayList<Condition> conditions;
 	
-	// this lock is used to synchronize the lights:
-	// when one light wants to change to green, it takes the lock.. So
-	// it must wait until the lock is free (i.e. until the previously
-	// green light has turned to red)
-	private final ReentrantLock megaLock = new ReentrantLock();
-	//megaLock: just a fine name
+	/** this lock is used to synchronize the lights:
+	 *  when one light wants to change to green, it takes the lock.. So
+	 *  it must wait until the lock is free (i.e. until the previously
+	 *  green light has turned to red)
+	 */
+	private final ReentrantLock orangeLock = new ReentrantLock();
 
 	private int nextGreen = 0;// needed to know what thread to await
 	
@@ -73,8 +73,8 @@ public class SensorHandler extends Thread {
 
 
 			// after the locking, we are sure all the lights are red
-			megaLock.lock();
-			megaLock.unlock();
+			orangeLock.lock();
+			orangeLock.unlock();
 
 			// so, now we can just look what light wants to be green,
 			// with circular light handling
@@ -187,16 +187,13 @@ public class SensorHandler extends Thread {
 	// when arriving in this method, all the lights must be red
 	public synchronized void handleSignal(int numeros) {
 		assert getGreenLightIndex() == -1;
-
-		// if the numerosth light is green, it will look for itself
-		if(trafficLights.get(numeros).getLightState() == RED) {
-			setFalseSignal(numeros);
-			nextGreen = numeros; // this is needed in run()
-			// wake the red one
-			locks.get(numeros).lock();
-			conditions.get(numeros).signal();
-			locks.get(numeros).unlock();
-		}
+		setFalseSignal(numeros);
+		nextGreen = numeros; // this is needed in run()
+		// wake the red one
+		locks.get(numeros).lock();
+		conditions.get(numeros).signal();
+		locks.get(numeros).unlock();
+	
 	}
 	
 	/**
@@ -204,7 +201,7 @@ public class SensorHandler extends Thread {
 	 * (every time a light turns to green, it locks it and it is released
 	 * when it turns to red from orange)
 	 */
-	public ReentrantLock getMegaLock(){
-		return megaLock;
+	public ReentrantLock getOrangeLock(){
+		return orangeLock;
 	}
 }
